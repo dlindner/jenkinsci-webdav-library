@@ -5,7 +5,7 @@ import hudson.FilePath;
 import hudson.remoting.VirtualChannel;
 import org.jenkinsci.remoting.RoleChecker;
 
-@Grab(group='com.github.lookfirst', module='sardine', version='5.10')
+@Grab(group='com.github.lookfirst', module='sardine', version='5.13')
 import com.github.sardine.*;
 import com.github.sardine.impl.SardineException;
 import org.apache.http.client.*;
