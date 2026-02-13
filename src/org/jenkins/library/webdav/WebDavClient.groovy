@@ -100,7 +100,7 @@ class WebDavClient {
 	            def temp = File.createTempFile("put", null);
 	            try {
 	                file.copyTo(new FilePath(temp));
-	                this.steps.echo "Uploading ${file.getName()} to WebDAV..."
+	                this.steps.echo "Uploading ${file.getName()}..."
 	                conn.put(dest, temp, (String)null);
 	                this.steps.echo "Uploaded ${file.getName()}"
 	            } finally {
