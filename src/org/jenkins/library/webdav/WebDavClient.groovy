@@ -27,8 +27,6 @@ class WebDavClient {
     protected String user;
     protected String pass;
 
-    //protected Sardine conn;
-
     def steps;
 
     WebDavClient(steps, local, remote, user, pass) {
@@ -36,8 +34,6 @@ class WebDavClient {
         this.remote = remote;
         this.user = user;
         this.pass = pass;
-        //this.conn = SardineFactory.begin()
-        //this.conn.setCredentials(user, pass)
         this.steps = steps
     }
     
@@ -45,6 +41,7 @@ class WebDavClient {
 		def connection = SardineFactory.begin()
 		connection.setCredentials(user, pass)
 		operation(connection)
+		connection.shutdown()
 	}
 
     def mkdir(path) {
@@ -103,7 +100,7 @@ class WebDavClient {
 	            def temp = File.createTempFile("put", null);
 	            try {
 	                file.copyTo(new FilePath(temp));
-	                this.steps.echo "Uploading ${file.getName()}..."
+	                this.steps.echo "Uploading ${file.getName()} to WebDAV..."
 	                conn.put(dest, temp, (String)null);
 	                this.steps.echo "Uploaded ${file.getName()}"
 	            } finally {
