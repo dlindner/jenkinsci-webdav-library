@@ -101,7 +101,7 @@ class WebDavClient {
 	            try {
 	                file.copyTo(new FilePath(temp));
 	                this.steps.echo "Uploading ${file.getName()} to WebDAV..."
-	                conn.put(dest, temp, (String)null);
+	                conn.put(dest, temp, (String)null, true);
 	                this.steps.echo "Uploaded ${file.getName()}"
 	            } finally {
 	                temp.delete()
