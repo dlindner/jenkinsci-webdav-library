@@ -27,7 +27,7 @@ class WebDavClient {
     protected String user;
     protected String pass;
 
-    protected Sardine conn;
+    //protected Sardine conn;
 
     def steps;
 
@@ -36,85 +36,101 @@ class WebDavClient {
         this.remote = remote;
         this.user = user;
         this.pass = pass;
-        this.conn = SardineFactory.begin()
-        this.conn.setCredentials(user, pass)
+        //this.conn = SardineFactory.begin()
+        //this.conn.setCredentials(user, pass)
         this.steps = steps
     }
+    
+    def onSardineConnection(operation) {
+		def connection = SardineFactory.begin()
+		connection.setCredentials(user, pass)
+		operation(connection)
+	}
 
     def mkdir(path) {
-        /*
-         * WebDAV's MKCOL request cannot make directories recursively,
-         * so we have to do it manually in a loop.
-         */
-        def current = null
-        for (each in path.tokenize("/")) {
-            current = current == null ? each : current + "/" + each
-            try {
-                conn.createDirectory(path2url(current, true))
-            } catch (HttpResponseException hte) {
-                /*
-                 * Apache's mod_dav (at least) respond with '301 Moved permamently'
-                 * when the directory already exist. Do nothing then.
-                 *
-                 * NGINX's ngx_http_dav_module responds with `405 Not Allowed`.
-                 */
-                def status = hte.getStatusCode()
-                if (status != 301 && status != 405) throw hte;
-            }
-        }
+		onSardineConnection({ conn ->
+	        /*
+	         * WebDAV's MKCOL request cannot make directories recursively,
+	         * so we have to do it manually in a loop.
+	         */
+	        def current = null
+	        for (each in path.tokenize("/")) {
+	            current = current == null ? each : current + "/" + each
+	            try {
+	                conn.createDirectory(path2url(current, true))
+	            } catch (HttpResponseException hte) {
+	                /*
+	                 * Apache's mod_dav (at least) respond with '301 Moved permamently'
+	                 * when the directory already exist. Do nothing then.
+	                 *
+	                 * NGINX's ngx_http_dav_module responds with `405 Not Allowed`.
+	                 */
+	                def status = hte.getStatusCode()
+	                if (status != 301 && status != 405) throw hte;
+	            }
+	        }
+		})
     }
 
     def rm(path) {
-        try {
-            if (isdir(path)) {
-                conn.delete(path2url(path + DavResource.SEPARATOR))
-            } else {
-                conn.delete(path2url(path))
-            }
-        } catch (HttpResponseException hte) {
-            /*
-             * Apache's mod_dav (at least) requires directories to be
-             * referred with trailing slash and signals this with
-             * '301 Moved permamently'. In that case, retry with
-             * trailing slash.
-             */
-            if (hte.getStatusCode() == 301) {
-                rm(path + DavResource.SEPARATOR)
-            } else {
-                throw hte
-            }
-        }
+		onSardineConnection({ conn ->
+	        try {
+	            if (isdir(path)) {
+	                conn.delete(path2url(path + DavResource.SEPARATOR))
+	            } else {
+	                conn.delete(path2url(path))
+	            }
+	        } catch (HttpResponseException hte) {
+	            /*
+	             * Apache's mod_dav (at least) requires directories to be
+	             * referred with trailing slash and signals this with
+	             * '301 Moved permamently'. In that case, retry with
+	             * trailing slash.
+	             */
+	            if (hte.getStatusCode() == 301) {
+	                rm(path + DavResource.SEPARATOR)
+	            } else {
+	                throw hte
+	            }
+	        }
+		})
     }
 
     def put(path, pattern) {
-        for (file in this.local.list(pattern)) {
-            def dest = path2url(path + DavResource.SEPARATOR + file.getName());
-            def temp = File.createTempFile("put", null);
-            try {
-                file.copyTo(new FilePath(temp));
-                this.steps.echo "Uploading ${file.getName()}..."
-                conn.put(dest, temp, (String)null);
-                this.steps.echo "Uploaded ${file.getName()}"
-            } finally {
-                temp.delete()
-            }
-        }
+		onSardineConnection({ conn ->
+	        for (file in this.local.list(pattern)) {
+	            def dest = path2url(path + DavResource.SEPARATOR + file.getName());
+	            def temp = File.createTempFile("put", null);
+	            try {
+	                file.copyTo(new FilePath(temp));
+	                this.steps.echo "Uploading ${file.getName()}..."
+	                conn.put(dest, temp, (String)null);
+	                this.steps.echo "Uploaded ${file.getName()}"
+	            } finally {
+	                temp.delete()
+	            }
+	        }
+        })
     }
 
 
     def ls(path = null) {
-        def resources = conn.list(path2url(path))
-        resources.remove(0)
-        return resources.collect { it.getName().toString() }
+		onSardineConnection({ conn ->
+	        def resources = conn.list(path2url(path))
+	        resources.remove(0)
+	        return resources.collect { it.getName().toString() }
+        })
     }
 
     def isdir(path = null) {
-        try {
-            def resources = conn.list(path2url(path))
-            return resources.size >= 0
-        } catch (SardineException se) {
-            return false;
-        }
+		onSardineConnection({ conn ->
+	        try {
+	            def resources = conn.list(path2url(path))
+	            return resources.size >= 0
+	        } catch (SardineException se) {
+	            return false;
+	        }
+        })
     }
 
     private def path2url(path, isdir = false) {
