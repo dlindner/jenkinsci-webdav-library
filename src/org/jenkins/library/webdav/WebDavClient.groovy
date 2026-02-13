@@ -100,8 +100,10 @@ class WebDavClient {
 	            def temp = File.createTempFile("put", null);
 	            try {
 	                file.copyTo(new FilePath(temp));
-	                this.steps.echo "Uploading ${file.getName()} to WebDAV..."
-	                conn.put(dest, temp, (String)null, true);
+	                this.steps.echo "Uploading ${file.getName()} as stream to WebDAV..."
+	                
+   					def input = new FileInputStream(temp)
+	                conn.put(dest, input, (String)null, true);
 	                this.steps.echo "Uploaded ${file.getName()}"
 	            } finally {
 	                temp.delete()
