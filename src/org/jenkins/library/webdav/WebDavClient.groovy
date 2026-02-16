@@ -54,7 +54,8 @@ class WebDavClient {
 	        for (each in path.tokenize("/")) {
 	            current = current == null ? each : current + "/" + each
 	            try {
-	                conn.createDirectory(path2url(current, true))
+					def url = path2url(current, true)
+	                conn.createDirectory(url)
 	            } catch (HttpResponseException hte) {
 	                /*
 	                 * Apache's mod_dav (at least) respond with '301 Moved permamently'
@@ -140,6 +141,6 @@ class WebDavClient {
         if (isdir && url.charAt(url.length()-1) != DavResource.SEPARATOR.charAt(0)) {
             url = url + DavResource.SEPARATOR
         }
-        return url
+        return url.replace(' ', '%20')
     }
 }
