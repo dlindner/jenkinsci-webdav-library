@@ -143,6 +143,6 @@ class WebDavClient {
         if (isdir && url.charAt(url.length()-1) != DavResource.SEPARATOR.charAt(0)) {
             url = url + DavResource.SEPARATOR
         }
-        return url
+        return url.replace(' ', '%20')
     }
 }
