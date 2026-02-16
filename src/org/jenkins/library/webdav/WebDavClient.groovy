@@ -55,7 +55,7 @@ class WebDavClient {
 	            current = current == null ? each : current + "/" + each
 	            try {
 					print(current)
-					url = path2url(current, true)
+					def url = path2url(current, true)
 					print(url)
 	                conn.createDirectory(url)
 	            } catch (HttpResponseException hte) {
