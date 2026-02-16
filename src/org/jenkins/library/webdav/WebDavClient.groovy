@@ -54,9 +54,7 @@ class WebDavClient {
 	        for (each in path.tokenize("/")) {
 	            current = current == null ? each : current + "/" + each
 	            try {
-					this.steps.echo "current: ${current}"
 					def url = path2url(current, true)
-					this.steps.echo "url: ${url}"
 	                conn.createDirectory(url)
 	            } catch (HttpResponseException hte) {
 	                /*
